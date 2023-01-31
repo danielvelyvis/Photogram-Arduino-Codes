@@ -56,7 +56,7 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 //   D7 connects to digital pin 29
 
 // Assign human-readable names to some common 16-bit color values:
-#define  BLACK   0x0000
+#define BLACK   0x0000
 #define BLUE    0x001F
 #define RED     0xF800
 #define GREEN   0x07E0
@@ -67,7 +67,6 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 #define GOLD    0xFEA0
 #define SILVER    0xC618
 #define LIME    0x07E0
-//#define GREY tft.color565(64, 64, 64):
 
 
 Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
@@ -111,8 +110,7 @@ void setup(void) {
   
   tft.begin(identifier);
 
-  int focal_length_val = 0;
-
+//VARIABLE DECLARATIONS
   int currentpage = 0;
   
   tft.setRotation(1);
@@ -121,6 +119,8 @@ void setup(void) {
 }
 
 void loop(void) {
+    int flength;
+    int new_flength;
 
   //reading touch sensor
   digitalWrite(13, HIGH);
@@ -140,53 +140,59 @@ void loop(void) {
       if (p.x > 50 && p.x < 270 && p.y > 50 && p.y < 205){
         
         tft.fillScreen(BLACK);
-        currentpage = 1; 
+        focal_length_screen(); //LOAD FOCAL LENGTH SCREEN
+        currentpage = 1; //GO TO FOCAL LENGTH SCREEN
       }
     }
   }
 
-  if (currentpage == 1){//ENTER FOCAL LENGTH
-    please_enter();
-    focal_length_screen();
-    plus_minus();
+  if (currentpage == 1){//FOCAL LENGTH SCREEN
 
     /*while(true){ //stabilize screen
      if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
       break;
       }
-    }*/
-    
-    Serial.println("Next step");
-    if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
+    }*/  
+    delay(500);  
 
-      int focal_length_val = 0;
-          
-      Serial.print("X = "); Serial.print(p.x);
+        Serial.print("the flength is ");
+        Serial.println(flength);   
+        Serial.print("the new flength is ");     
+        Serial.println(new_flength);
+    if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {  
+      /*Serial.print("X = "); Serial.print(p.x);
       Serial.print("\tY = "); Serial.print(p.y);
-      Serial.print("\tPressure = "); Serial.println(p.z);
-    
-      if (p.x > 0 && p.x < 50 && p.y > 90 && p.y < 130){
-        Serial.println("Minus");
-
-        focal_length_val--;
-        tft.setCursor(100, 110);
-        tft.setTextColor(WHITE);
-        tft.setTextSize(3);
-
-        Serial.println(focal_length_val);
-        tft.println(focal_length_val);
-        
-      }
+      Serial.print("\tPressure = "); Serial.println(p.z);*/
       if (p.x > 0 && p.x < 50 && p.y > 130 && p.y < 170){
-        Serial.println("Plus");
+        //Serial.println("Plus");
 
-        focal_length_val++;
+        flength++;
+
         tft.setCursor(100, 110);
         tft.setTextColor(WHITE);
         tft.setTextSize(3);
-        tft.println(focal_length_val);
-        Serial.println(focal_length_val);
-      }
+        tft.println(new_flength);
+        
+        Serial.print("the flength is ");
+        Serial.println(flength);   
+        Serial.print("the new flength is ");     
+        Serial.println(new_flength);      
+      }   
+      if (p.x > 0 && p.x < 50 && p.y > 90 && p.y < 130){
+        //Serial.println("Minus");
+
+        flength--;
+
+        tft.setCursor(100, 110);
+        tft.setTextColor(WHITE);
+        tft.setTextSize(3);
+        tft.println(new_flength);
+        
+        Serial.print("the flength is ");
+        Serial.println(flength);   
+        Serial.print("the new flength is ");     
+        Serial.println(new_flength);
+      }3
     }
   }
 }
@@ -205,11 +211,19 @@ void start_button(){
   return;
 }
 void please_enter(){
-    tft.setCursor(40, 15);
+    tft.setCursor(80, 18);
     tft.setTextColor(GOLD);
-    tft.setTextSize(3);
+    tft.setTextSize(2);
     tft.println("Please Enter:");
     return;
+}
+
+void back_button(){
+    tft.fillRect(0, 0, 36, 36, WHITE);
+    tft.fillRect(2, 2, 32, 32, SILVER);
+    tft.fillTriangle(6, 17, 14, 10, 14, 24, WHITE);
+    tft.fillRect(14, 15, 14, 5, WHITE); 
+    
 }
 void plus_minus(){
     tft.fillRect(160, 180, 60, 60, WHITE);
@@ -223,6 +237,10 @@ void plus_minus(){
     return;
 }
 void focal_length_screen(){
+
+    plus_minus();
+    please_enter();
+    back_button();
     
     tft.fillRoundRect(70, 50, 180, 60, 20, SILVER);
     tft.drawRoundRect(70, 50, 180, 60, 20, WHITE);
