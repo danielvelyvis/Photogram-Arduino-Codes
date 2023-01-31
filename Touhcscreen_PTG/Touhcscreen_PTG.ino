@@ -75,6 +75,7 @@ Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 #define MAXPRESSURE 1000
 
 int currentpage = 0; // 0 - Start Screen
+int flength;
 
 void setup(void) {
   
@@ -119,8 +120,7 @@ void setup(void) {
 }
 
 void loop(void) {
-    int flength;
-    int new_flength;
+  
 
   //reading touch sensor
   digitalWrite(13, HIGH);
@@ -148,68 +148,36 @@ void loop(void) {
 
   if (currentpage == 1){//FOCAL LENGTH SCREEN
 
-    /*while(true){ //stabilize screen
-     if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
-      break;
-      }
-    }*/  
     delay(500);  
-
-        Serial.print("the flength is ");
-        Serial.println(flength);   
-        Serial.print("the new flength is ");     
-        Serial.println(new_flength);
+    Serial.print("X = "); Serial.print(p.x);
+    Serial.print("\tY = "); Serial.print(p.y);
+    Serial.print("\tPressure = "); Serial.println(p.z);        
     if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {  
-      /*Serial.print("X = "); Serial.print(p.x);
-      Serial.print("\tY = "); Serial.print(p.y);
-      Serial.print("\tPressure = "); Serial.println(p.z);*/
       if (p.x > 0 && p.x < 50 && p.y > 130 && p.y < 170){
         //Serial.println("Plus");
-
         flength++;
-
-        tft.setCursor(100, 110);
-        tft.setTextColor(WHITE);
-        tft.setTextSize(3);
-        tft.println(new_flength);
-        
-        Serial.print("the flength is ");
-        Serial.println(flength);   
-        Serial.print("the new flength is ");     
-        Serial.println(new_flength);      
       }   
-      if (p.x > 0 && p.x < 50 && p.y > 90 && p.y < 130){
-        //Serial.println("Minus");
+    if (p.x > 0 && p.x < 50 && p.y > 90 && p.y < 130){
+      //Serial.println("Minus");
+      flength--;
+      }
+    Serial.print("the flength is ");
+    Serial.println(flength);
+    num_cover();
+    tft.setCursor(145, 130);
+    tft.setTextColor(WHITE);
+    tft.setTextSize(3);
+    tft.println(flength);
+    }
+    if (p.x > 270 && p.x < 320 && p.y > 0 && p.y < 40){
 
-        flength--;
-
-        tft.setCursor(100, 110);
-        tft.setTextColor(WHITE);
-        tft.setTextSize(3);
-        tft.println(new_flength);
-        
-        Serial.print("the flength is ");
-        Serial.println(flength);   
-        Serial.print("the new flength is ");     
-        Serial.println(new_flength);
-      }3
+      tft.fillScreen(BLACK);
+      start_button();
+      currentpage = 1;
     }
   }
 }
 
-void start_button(){
-
-  tft.setRotation(1);
-  tft.fillScreen(BLACK);
-  tft.fillRoundRect(50, 50, 220, 140, 20, BLUE);
-  tft.drawRoundRect(50, 50, 220, 140, 20, WHITE);
-  
-  tft.setCursor(90, 105);
-  tft.setTextColor(GOLD);
-  tft.setTextSize(5);
-  tft.println("START");
-  return;
-}
 void please_enter(){
     tft.setCursor(80, 18);
     tft.setTextColor(GOLD);
@@ -236,6 +204,25 @@ void plus_minus(){
     tft.fillRect(115, 207, 30, 5, WHITE);    
     return;
 }
+
+void num_cover(){
+  tft.fillRect(125, 120, 70, 40, BLACK);
+}
+
+void start_button(){
+
+  tft.setRotation(1);
+  tft.fillScreen(BLACK);
+  tft.fillRoundRect(50, 50, 220, 140, 20, BLUE);
+  tft.drawRoundRect(50, 50, 220, 140, 20, WHITE);
+  
+  tft.setCursor(90, 105);
+  tft.setTextColor(GOLD);
+  tft.setTextSize(5);
+  tft.println("START");
+  return;
+}
+
 void focal_length_screen(){
 
     plus_minus();
