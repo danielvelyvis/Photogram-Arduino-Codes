@@ -75,9 +75,13 @@ Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 #define MINPRESSURE 10
 #define MAXPRESSURE 1000
 
+
+//VARIABLE DECLARATIONS
 int currentpage = 0; // 0 - Start Screen
-int flength, save_flength;
-int d_centre, save_d_centre;
+int flength = 0, save_flength;
+float d_centre = 3.00, save_d_centre;
+float h_object = 0, save_h_object;
+float d_object = 0, save_d_object;
 
 void setup(void) {
  
@@ -114,6 +118,7 @@ void setup(void) {
 tft.begin(identifier);
 tft.setRotation(1);
 start_button();
+Serial.println("\nSTART SCREEN\n");
 
 //SCREEN VALUES
 //Start Screen = 0
@@ -122,7 +127,6 @@ start_button();
 }
 
 void loop(void) {
- 
 
   //reading touch sensor
   digitalWrite(13, HIGH);
@@ -144,17 +148,15 @@ void loop(void) {
         tft.fillScreen(BLACK);
         focal_length_screen(); //LOAD FOCAL LENGTH SCREEN
         currentpage = 1; //GO TO FOCAL LENGTH SCREEN
+        Serial.println("FOCAL LENGTH SCREEN");
+        delay (600);
       }
     }
   }
 
   if (currentpage == 1){//FOCAL LENGTH SCREEN
-    delay(300);
-    tft.setCursor(150, 130);
-    tft.setTextColor(WHITE);
-    tft.setTextSize(3);
-    tft.println(flength);
-   
+    delay(100);
+    
     if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {  
       if (p.x > 0 && p.x < 50 && p.y > 130 && p.y < 170){
         //Serial.println("Plus");
@@ -171,25 +173,170 @@ void loop(void) {
       if (flength <= 0){
         flength = 0;  
       }
-    num_cover();
-    tft.setCursor(150, 130);
-    tft.setTextColor(WHITE);
-    tft.setTextSize(3);
-    tft.println(flength);
-    }
-    if (p.x > 250 && p.x < 320 && p.y > 0 && p.y < 60){//RETURN TO START SCREEN
-
-      tft.fillScreen(BLACK);
-      start_button();
-      flength = 0;
-      currentpage = 0; //BACK TO START SCREEN
-    }
-    if (p.x > 250 && p.x < 320 && p.y > 184 && p.y < 244){//RETURN TO START SCREEN
-      int save_flength = flength;//SAVED FOCAL LENGTH VARIABLE
-      tft.fillScreen(GREEN);
-      currentpage = 2; //BACK TO START SCREEN
+      num_cover();
+      tft.setCursor(150, 130);
+      tft.setTextColor(WHITE);
+      tft.setTextSize(3);
+      tft.println(flength);
+      mm();
+      
+      if (p.x > 250 && p.x < 320 && p.y > 0 && p.y < 60){//RETURN TO START SCREEN
+  
+        tft.fillScreen(BLACK);
+        start_button();
+        flength = 0;
+        currentpage = 0; //BACK TO START SCREEN
+        Serial.println("START SCREEN\n");
+      }
+      if (p.x > 250 && p.x < 320 && p.y > 184 && p.y < 244){//GO TO DISTANCE FROM CENTRE SCREEN
+        save_flength = flength;//SAVED FOCAL LENGTH VARIABLE
+        Serial.print("The saved focal length is ");
+        Serial.println(save_flength);
+        tft.fillScreen(BLACK);
+        p.x = 0;
+        p.y = 0;
+        distance_from_centre();
+        currentpage = 2; //GO TO DISTANCE FROM SCREEN
+        Serial.println("\nDISTANCE FROM CENTRE SCREEN");
+        delay (600);
+      }
     }
   }
+
+
+  if (currentpage == 2){//DISTANCE FROM CENTRE SCREEN
+   
+    if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {  
+      if (p.x > 0 && p.x < 50 && p.y > 130 && p.y < 170){
+        d_centre += 0.1;
+      }  
+      if (p.x > 0 && p.x < 50 && p.y > 90 && p.y < 130){
+        d_centre -= 0.1;
+      }
+      if (d_centre >= 6){//MAX DISTANCE FROM CENTRE
+        d_centre = 6;  
+      }
+      if (d_centre <= 0){//MIN DISTANCE FROM CENTRE
+        d_centre = 0;  
+      }
+      num_cover();
+      tft.setCursor(120, 130);
+      tft.setTextColor(WHITE);
+      tft.setTextSize(3);
+      tft.println(d_centre);
+      cm();
+
+      if (p.x > 250 && p.x < 320 && p.y > 0 && p.y < 60){//RETURN TO FOCAL LENGTH SCREEN 
+        tft.fillScreen(BLACK);
+        focal_length_screen();
+        d_centre = 3.00;
+        currentpage = 1; //BACK TO FOCAL LENGTH SCREEN
+        Serial.println("\nFOCAL LENGTH SCREEN");
+      }
+      if (p.x > 250 && p.x < 320 && p.y > 184 && p.y < 244){//GO TO HEIGHT OF OBJECT SCREEN
+        save_d_centre = d_centre;//SAVED DISTANCE FROM CENTRE
+        Serial.print("The saved distance from centre is ");
+        Serial.println(save_d_centre);
+        p.x = 0;
+        p.y = 0;
+        height_of_object();
+        currentpage = 3; //GO TO HEIGHT OF OBJECT SCREEN
+        Serial.println("\nHEIGHT OF OBJECT SCREEN SCREEN");
+        delay (600);
+      }
+    }
+  }
+
+
+
+  if (currentpage == 3){//HEIGHT OF OBJECT SCREEN
+   
+    if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {  
+      if (p.x > 0 && p.x < 50 && p.y > 130 && p.y < 170){
+        h_object += 0.1;
+      }  
+      if (p.x > 0 && p.x < 50 && p.y > 90 && p.y < 130){
+        h_object -= 0.1;
+      }
+      if (h_object >= 25){//MAX HEIGHT OF OBJECT
+        h_object = 25;  
+      }
+      if (d_centre <= 0){//MIN HEIGHT OF OBJECT
+        d_centre = 0;  
+      }
+      num_cover();
+      tft.setCursor(120, 130);
+      tft.setTextColor(WHITE);
+      tft.setTextSize(3);
+      tft.println(h_object);
+      cm();
+
+      if (p.x > 250 && p.x < 320 && p.y > 0 && p.y < 60){//RETURN TO DISTANCE FROM CENTRE SCREEN 
+        tft.fillScreen(BLACK);
+        distance_from_centre();
+        h_object = 0;
+        currentpage = 2; //BACK TO DISTANCE FROM CENTRE SCREEN
+        Serial.println("\nDISTANCE FROM CENTRE SCREEN");
+      }
+      if (p.x > 250 && p.x < 320 && p.y > 184 && p.y < 244){//GO TO DIAMETER OF OBJECT SCREEN
+        save_h_object = h_object;//SAVED DISTANCE FROM CENTRE
+        Serial.print("The height of object is ");
+        Serial.println(save_h_object);
+        p.x = 0;
+        p.y = 0;
+        diameter_of_object();
+        currentpage = 4; //GO TO DIAMETER OF OBJECT
+        Serial.println("\nDIAMETER OF OBJECT SCREEN");
+        delay (600);
+      }
+    }
+  }
+
+
+
+  if (currentpage == 4){//DIAMETER OF OBJECT SCREEN 
+    if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {  
+      if (p.x > 0 && p.x < 50 && p.y > 130 && p.y < 170){
+        d_object += 0.1;
+      }  
+      if (p.x > 0 && p.x < 50 && p.y > 90 && p.y < 130){
+        d_object -= 0.1;
+      }
+      if (d_object >= 20){//MAX DIAMETER OF OBJECT
+        d_object = 20;  
+      }
+      if (d_object <= 0){//MIN DIAMETER OF OBJECT
+        d_object = 0;  
+      }
+      num_cover();
+      tft.setCursor(120, 130);
+      tft.setTextColor(WHITE);
+      tft.setTextSize(3);
+      tft.println(d_object);
+      cm();
+
+      if (p.x > 250 && p.x < 320 && p.y > 0 && p.y < 60){//RETURN TO HEIGHT OF OBJECT SCREEN 
+        tft.fillScreen(BLACK);
+        height_of_object();
+        d_object = 0;
+        currentpage = 3; //BACK TO HEIGHT OF OBJECT SCREEN
+        Serial.println("\nHEIGHT OF OBJECT SCREEN");
+      }
+      if (p.x > 250 && p.x < 320 && p.y > 184 && p.y < 244){//GO TO DIAMETER OF OBJECT SCREEN
+        save_d_object =d_object;//SAVED DISTANCE FROM CENTRE
+        Serial.print("The diameter of object is ");
+        Serial.println(save_d_object);
+        p.x = 0;
+        p.y = 0;
+        start_scanning();
+        currentpage = 5; //START SCANNING
+        Serial.println("\nSTART SCANNING");
+        delay (600);
+      }
+    }
+  }
+
+ 
 }
 
 
@@ -201,7 +348,6 @@ void please_enter(){
     tft.println("Please Enter:");
     return;
 }
-
 void back_button(){
     tft.fillRect(0, 0, 46, 46, WHITE);
     tft.fillRect(2, 2, 42, 42, SILVER);
@@ -220,7 +366,6 @@ void plus_minus(){
     tft.fillRect(115, 207, 30, 5, WHITE);    
     return;
 }
-
 void confirm_button(){
     tft.fillRect(274, 0, 46, 46, WHITE);
     tft.fillRect(276, 2, 42, 42, GREEN);
@@ -230,11 +375,9 @@ void confirm_button(){
     tft.fillTriangle(298, 30, 308, 12, 295, 27, WHITE);
    
 }
-
 void num_cover(){
-  tft.fillRect(125, 120, 70, 40, BLACK);
+  tft.fillRect(65, 115, 200, 60, BLACK);
 }
-
 void start_button(){
 
   tft.setRotation(1);
@@ -248,8 +391,25 @@ void start_button(){
   tft.println("START");
   return;
 }
+
+void mm(){
+    tft.setCursor(180, 130);
+    tft.setTextColor(WHITE);
+    tft.setTextSize(3);
+    tft.println("mm");
+    return;  
+}
+
+void cm(){
+    tft.setCursor(200, 130);
+    tft.setTextColor(WHITE);
+    tft.setTextSize(3);
+    tft.println("cm");
+    return;  
+}
 void focal_length_screen(){
 
+    tft.fillScreen(BLACK);
     plus_minus();
     please_enter();
     back_button();
@@ -257,13 +417,114 @@ void focal_length_screen(){
    
     tft.fillRoundRect(70, 50, 180, 60, 20, SILVER);
     tft.drawRoundRect(70, 50, 180, 60, 20, WHITE);
-    tft.setCursor(87, 75);
+    tft.setCursor(89, 74);
     tft.setTextColor(BLACK);
     tft.setTextSize(2);
     tft.println("FOCAL LENGTH");
+
+    num_cover();
+    tft.setCursor(150, 130);
+    tft.setTextColor(WHITE);
+    tft.setTextSize(3);
+    tft.println(flength);
+    mm();
+    
+    return;
+}
+void distance_from_centre(){
+
+    tft.fillScreen(BLACK);
+    plus_minus();
+    please_enter();
+    back_button();
+    confirm_button();
+
+    
+    tft.fillRoundRect(6, 50, 308, 60, 16, SILVER);
+    tft.drawRoundRect(6, 50, 308, 60, 16, WHITE);
+    tft.setCursor(18, 64);
+    tft.setTextColor(BLACK);
+    tft.setTextSize(2);
+    tft.println("DISTANCE FROM THE CENTRE");
+    tft.setCursor(10, 82);
+    tft.println(" OF YOUR PHONE TO CAMERA");
+
+    num_cover();
+    tft.setCursor(120, 130);
+    tft.setTextColor(WHITE);
+    tft.setTextSize(3);
+    tft.println(d_centre);
+    cm();
     return;
 }
 
-void distance_from_centre(){
-   
+void height_of_object(){
+    
+    tft.fillScreen(BLACK);
+    plus_minus();
+    please_enter();
+    back_button();
+    confirm_button();
+    
+    tft.fillRoundRect(16, 50, 288, 60, 16, SILVER);
+    tft.drawRoundRect(16, 50, 288, 60, 16, WHITE);
+    tft.setCursor(40, 74);
+    tft.setTextColor(BLACK);
+    tft.setTextSize(2);
+    tft.println("HEIGHT OF THE OBJECT");
+
+    num_cover();
+    tft.setCursor(120, 130);
+    tft.setTextColor(WHITE);
+    tft.setTextSize(3);
+    tft.println(h_object);
+    cm();
+    return;
+}
+
+void diameter_of_object(){
+    
+    tft.fillScreen(BLACK);
+    plus_minus();
+    please_enter();
+    back_button();
+    confirm_button();
+    
+    tft.fillRoundRect(6, 50, 308, 60, 16, SILVER);
+    tft.drawRoundRect(6, 50, 308, 60, 16, WHITE);
+    tft.setCursor(28, 74);
+    tft.setTextColor(BLACK);
+    tft.setTextSize(2);
+    tft.println("DIAMETER OF THE OBJECT");
+
+    num_cover();
+    tft.setCursor(120, 130);
+    tft.setTextColor(WHITE);
+    tft.setTextSize(3);
+    tft.println(d_object);
+    cm();
+    return;
+}
+
+void start_scanning(){
+    int i;
+    int box = 20;
+    
+    tft.fillScreen(BLACK);
+    tft.setCursor(40, 40);
+    tft.setTextColor(WHITE);
+    tft.setTextSize(5);
+    tft.println("SCANNING");
+
+    for(i=2; i <= 6; i+=2){
+      delay(800);
+      tft.fillRect(70+box*i, 100, box, box, WHITE);
+
+      if(i == 6){
+        delay(800);
+        i = 0;
+        tft.fillRect(100, 90, 180, 40, BLACK);
+      }
+    }
+    return;
 }
