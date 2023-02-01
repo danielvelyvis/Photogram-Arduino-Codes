@@ -190,9 +190,9 @@ void loop(void) {
       currentpage = 2; //BACK TO START SCREEN
     }
   }
-
-  if (currentpage == 2)//
 }
+
+
 
 void please_enter(){
     tft.setCursor(80, 18);
@@ -267,4 +267,3 @@ void focal_length_screen(){
 void distance_from_centre(){
    
 }
-
