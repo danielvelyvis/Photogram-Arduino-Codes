@@ -78,9 +78,9 @@ Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 
 //VARIABLE DECLARATIONS
 int currentpage = 0; // 0 - Start Screen
-int flength = 0, save_flength;
-float d_centre = 3.00, save_d_centre;
-float h_object = 0, save_h_object;
+int flength = 22, save_flength;
+float d_centre = 3, save_d_centre;
+float h_object = 5, save_h_object;
 float d_object = 0, save_d_object;
 
 void setup(void) {
@@ -167,11 +167,11 @@ void loop(void) {
         flength--;
       }
 
-      if (flength >= 5){
-        flength = 5;  
+      if (flength >= 30){
+        flength = 30;  
       }
-      if (flength <= 0){
-        flength = 0;  
+      if (flength <= 22){
+        flength = 22;  
       }
       num_cover();
       tft.setCursor(150, 130);
@@ -229,7 +229,7 @@ void loop(void) {
       if (p.x > 250 && p.x < 320 && p.y > 0 && p.y < 60){//RETURN TO FOCAL LENGTH SCREEN 
         tft.fillScreen(BLACK);
         focal_length_screen();
-        d_centre = 3.00;
+        d_centre = 3;
         currentpage = 1; //BACK TO FOCAL LENGTH SCREEN
         Serial.println("\nFOCAL LENGTH SCREEN");
       }
@@ -261,8 +261,8 @@ void loop(void) {
       if (h_object >= 25){//MAX HEIGHT OF OBJECT
         h_object = 25;  
       }
-      if (d_centre <= 0){//MIN HEIGHT OF OBJECT
-        d_centre = 0;  
+      if (h_object <= 5){//MIN HEIGHT OF OBJECT
+        h_object = 5;  
       }
       num_cover();
       tft.setCursor(120, 130);
@@ -274,7 +274,7 @@ void loop(void) {
       if (p.x > 250 && p.x < 320 && p.y > 0 && p.y < 60){//RETURN TO DISTANCE FROM CENTRE SCREEN 
         tft.fillScreen(BLACK);
         distance_from_centre();
-        h_object = 0;
+        h_object = 5;
         currentpage = 2; //BACK TO DISTANCE FROM CENTRE SCREEN
         Serial.println("\nDISTANCE FROM CENTRE SCREEN");
       }
@@ -401,7 +401,7 @@ void mm(){
 }
 
 void cm(){
-    tft.setCursor(200, 130);
+    tft.setCursor(220, 130);
     tft.setTextColor(WHITE);
     tft.setTextSize(3);
     tft.println("cm");
