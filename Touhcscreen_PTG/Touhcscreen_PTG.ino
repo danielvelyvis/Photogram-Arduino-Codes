@@ -1,6 +1,9 @@
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_TFTLCD.h> // Hardware-specific library
 #include <TouchScreen.h> // Touch Scrren library
+#include <math.h>
+
+#define PI 3.1415926535897932384626433832795
 
 #if defined(__SAM3X8E__)
     #undef __FlashStringHelper::F(string_literal)
@@ -71,17 +74,29 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 
 Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 
-//Assign pressure values
+//define pressure values
 #define MINPRESSURE 10
 #define MAXPRESSURE 1000
+
+//define sensor dimentions
+#define sensor_width 36 //sensor width for a full frame camera
+#define sensor_height 24 //sensor height for a full frame camera
 
 
 //VARIABLE DECLARATIONS
 int currentpage = 0; // 0 - Start Screen
 int flength = 22, save_flength;
-float d_centre = 3, save_d_centre;
-float h_object = 5, save_h_object;
-float d_object = 0, save_d_object;
+double d_centre = 3, save_d_centre;
+double h_object = 5, save_h_object;
+double d_object = 0, save_d_object;
+
+double AOV_width; // angle of view for the width of the field of view
+double AOV_height; //angle of view for the height of the field of view
+double focal_length; //equivalent focal length of smartphone camera
+
+double object_diameter;
+double object_height;
+
 
 void setup(void) {
  
@@ -323,7 +338,7 @@ void loop(void) {
         Serial.println("\nHEIGHT OF OBJECT SCREEN");
       }
       if (p.x > 250 && p.x < 320 && p.y > 184 && p.y < 244){//GO TO DIAMETER OF OBJECT SCREEN
-        save_d_object =d_object;//SAVED DISTANCE FROM CENTRE
+        save_d_object =d_object;//SAVED DIAMETER OF OBJECT
         Serial.print("The diameter of object is ");
         Serial.println(save_d_object);
         p.x = 0;
@@ -332,11 +347,13 @@ void loop(void) {
         currentpage = 5; //START SCANNING
         Serial.println("\nSTART SCANNING");
         delay (600);
+
+        calc_AOV(); 
       }
     }
   }
+  
 
- 
 }
 
 
@@ -376,7 +393,7 @@ void confirm_button(){
    
 }
 void num_cover(){
-  tft.fillRect(65, 115, 200, 60, BLACK);
+  tft.fillRect(65, 115, 150, 60, GREEN);
 }
 void start_button(){
 
@@ -393,7 +410,7 @@ void start_button(){
 }
 
 void mm(){
-    tft.setCursor(180, 130);
+    tft.setCursor(220, 130);
     tft.setTextColor(WHITE);
     tft.setTextSize(3);
     tft.println("mm");
@@ -527,4 +544,56 @@ void start_scanning(){
       }
     }
     return;
+}
+
+void calc_AOV(){
+
+  int focal_length;
+  focal_length = save_flength;
+  
+  AOV_width = 2*atan(sensor_width/(2*focal_length));
+  AOV_height = 2*atan(sensor_height/(2*focal_length));
+}
+
+float calc_minimum_distance(double view_angle){
+  double minimum_distance;  
+  double min_distance_width;
+  double min_distance_height;
+  double alpha; 
+  double beta;
+  double gamma;
+  double length_AC;
+  double length_AD;
+  double length_DC;
+  double length_AE;
+
+  double object_diameter;
+  double object_height;
+  double distance_camera;
+
+  object_diameter = save_d_object;
+  object_height = save_h_object;
+  distance_camera = save_d_centre;
+
+  alpha = AOV_height/2;
+  beta = view_angle;
+  length_AC = (object_height/2)/cos(beta);
+  length_AD = sqrt(pow(object_height/2,2) + pow(object_diameter/2,2));
+  gamma = (PI/2)-atan(object_height/object_diameter) - beta;
+  length_DC = sqrt(pow(length_AD,2) + pow(length_AC,2)-2*(length_AD)*(length_AC)*cos(gamma));
+
+  min_distance_height = (length_AC + sin(alpha+beta)/((sin(PI/2-alpha))/length_DC))/tan(alpha); 
+  min_distance_width = object_diameter/(2*tan(AOV_width/2));
+
+  if (min_distance_height<min_distance_width){
+    minimum_distance = min_distance_width;
+  }
+  else{
+    minimum_distance = min_distance_height;
+  }
+
+  Serial.print("Minimum distance is: ");
+  Serial.println(minimum_distance);
+  return minimum_distance;
+  
 }
