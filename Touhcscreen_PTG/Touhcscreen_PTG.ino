@@ -4,6 +4,11 @@
 #include <math.h>
 
 #define PI 3.1415926535897932384626433832795
+#define sensor_width 36 //sensor width for a full frame camera
+#define sensor_height 24 //sensor height for a full frame camera
+
+#define MINPRESSURE 10
+#define MAXPRESSURE 1000
 
 #if defined(__SAM3X8E__)
     #undef __FlashStringHelper::F(string_literal)
@@ -13,8 +18,8 @@
 //Defining Touch Screen Pins
 #define YP A3  // must be an analog pin, use "An" notation!
 #define XM A2  // must be an analog pin, use "An" notation!
-#define YM 9   // can be a digital pin
-#define XP 8   // can be a digital pin
+#define YM 23   // can be a digital pin
+#define XP 22   // can be a digital pin
 
 #define TS_MINX 150
 #define TS_MINY 120
@@ -74,21 +79,30 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 
 Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 
-//define pressure values
-#define MINPRESSURE 10
-#define MAXPRESSURE 1000
-
-//define sensor dimentions
-#define sensor_width 36 //sensor width for a full frame camera
-#define sensor_height 24 //sensor height for a full frame camera
-
-
 //VARIABLE DECLARATIONS
 int currentpage = 0; // 0 - Start Screen
 int flength = 22, save_flength;
-double d_centre = 3, save_d_centre;
-double h_object = 5, save_h_object;
-double d_object = 0, save_d_object;
+float d_centre = 3, save_d_centre;
+float h_object = 5, save_h_object;
+float d_object = 0, save_d_object;
+
+int plus_1_x = -10;
+int plus_2_x = 60;
+int plus_1_y = 111;
+int plus_2_y = 160;
+int minus_1_x = -10;//same as plus_1_x
+int minus_2_x = 60;//same as plus_2_x
+int minus_1_y = 60;
+int minus_2_y = 99;
+
+int back_1_x = 240;
+int back_2_x = 320;
+int back_1_y = -10;
+int back_2_y = 30;
+int conf_1_x = 240;//same as back_1_x
+int conf_2_x = 320;//same as back_2_x
+int conf_1_y = 190;
+int conf_2_y = 230;
 
 double AOV_width; // angle of view for the width of the field of view
 double AOV_height; //angle of view for the height of the field of view
@@ -96,7 +110,6 @@ double focal_length; //equivalent focal length of smartphone camera
 
 double object_diameter;
 double object_height;
-
 
 void setup(void) {
  
@@ -130,15 +143,10 @@ void setup(void) {
     return;
   }
  
-tft.begin(identifier);
-tft.setRotation(1);
-start_button();
-Serial.println("\nSTART SCREEN\n");
-
-//SCREEN VALUES
-//Start Screen = 0
-//Focal Length Screen = 1
-//Distance From Phone Centre to Camera = 2
+  tft.begin(identifier);
+  tft.setRotation(3);
+  start_button();
+  Serial.println("\nSTART SCREEN\n");
 }
 
 void loop(void) {
@@ -151,15 +159,18 @@ void loop(void) {
   pinMode(XM, OUTPUT);
   pinMode(YP, OUTPUT);
  
-  p.x = map(p.x, TS_MINX, TS_MAXX, tft.width(), 0);
-  p.y = map(p.y, TS_MINY, TS_MAXY, tft.height(), 0);
- 
+  p.x = map(p.x, TS_MAXX, TS_MINX, tft.width(), 0);
+  p.y = map(p.y, TS_MAXY, TS_MINY, tft.height(), 0);
+
   if (currentpage == 0){//START SCREEN
 
     if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
- 
-      if (p.x > 50 && p.x < 270 && p.y > 50 && p.y < 205){
-       
+/*
+      Serial.print("X = "); Serial.print(p.x);
+      Serial.print("\tY = "); Serial.print(p.y);
+      Serial.print("\tPressure = "); Serial.println(p.z);
+*/
+      if (p.x > 50 && p.x < 250 && p.y > 20 && p.y < 200){
         tft.fillScreen(BLACK);
         focal_length_screen(); //LOAD FOCAL LENGTH SCREEN
         currentpage = 1; //GO TO FOCAL LENGTH SCREEN
@@ -173,11 +184,12 @@ void loop(void) {
     delay(100);
     
     if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {  
-      if (p.x > 0 && p.x < 50 && p.y > 130 && p.y < 170){
+      
+      if (p.x > plus_1_x && p.x < plus_2_x && p.y > plus_1_y && p.y < plus_2_y){
         //Serial.println("Plus");
         flength++;
       }  
-      if (p.x > 0 && p.x < 50 && p.y > 90 && p.y < 130){
+      if (p.x > minus_1_x && p.x < minus_2_x && p.y > minus_1_y && p.y < minus_2_y){
         //Serial.println("Minus");
         flength--;
       }
@@ -195,15 +207,15 @@ void loop(void) {
       tft.println(flength);
       mm();
       
-      if (p.x > 250 && p.x < 320 && p.y > 0 && p.y < 60){//RETURN TO START SCREEN
+      if (p.x > back_1_x && p.x < back_2_x && p.y > back_1_y && p.y < back_2_y){//RETURN TO START SCREEN
   
         tft.fillScreen(BLACK);
         start_button();
-        flength = 0;
+        flength = 22;
         currentpage = 0; //BACK TO START SCREEN
         Serial.println("START SCREEN\n");
       }
-      if (p.x > 250 && p.x < 320 && p.y > 184 && p.y < 244){//GO TO DISTANCE FROM CENTRE SCREEN
+      if (p.x > conf_1_x && p.x < conf_2_x && p.y > conf_1_y && p.y < conf_2_y){//GO TO DISTANCE FROM CENTRE SCREEN
         save_flength = flength;//SAVED FOCAL LENGTH VARIABLE
         Serial.print("The saved focal length is ");
         Serial.println(save_flength);
@@ -222,17 +234,17 @@ void loop(void) {
   if (currentpage == 2){//DISTANCE FROM CENTRE SCREEN
    
     if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {  
-      if (p.x > 0 && p.x < 50 && p.y > 130 && p.y < 170){
+      if (p.x > plus_1_x && p.x < plus_2_x && p.y > plus_1_y && p.y < plus_2_y){
         d_centre += 0.1;
       }  
-      if (p.x > 0 && p.x < 50 && p.y > 90 && p.y < 130){
+      if (p.x > minus_1_x && p.x < minus_2_x && p.y > minus_1_y && p.y < minus_2_y){
         d_centre -= 0.1;
       }
       if (d_centre >= 6){//MAX DISTANCE FROM CENTRE
         d_centre = 6;  
       }
-      if (d_centre <= 0){//MIN DISTANCE FROM CENTRE
-        d_centre = 0;  
+      if (d_centre <= 3){//MIN DISTANCE FROM CENTRE
+        d_centre = 3;  
       }
       num_cover();
       tft.setCursor(120, 130);
@@ -241,14 +253,14 @@ void loop(void) {
       tft.println(d_centre);
       cm();
 
-      if (p.x > 250 && p.x < 320 && p.y > 0 && p.y < 60){//RETURN TO FOCAL LENGTH SCREEN 
+      if (p.x > back_1_x && p.x < back_2_x && p.y > back_1_y && p.y < back_2_y){//RETURN TO FOCAL LENGTH SCREEN 
         tft.fillScreen(BLACK);
         focal_length_screen();
         d_centre = 3;
         currentpage = 1; //BACK TO FOCAL LENGTH SCREEN
         Serial.println("\nFOCAL LENGTH SCREEN");
       }
-      if (p.x > 250 && p.x < 320 && p.y > 184 && p.y < 244){//GO TO HEIGHT OF OBJECT SCREEN
+      if (p.x > conf_1_x && p.x < conf_2_x && p.y > conf_1_y && p.y < conf_2_y){//GO TO HEIGHT OF OBJECT SCREEN
         save_d_centre = d_centre;//SAVED DISTANCE FROM CENTRE
         Serial.print("The saved distance from centre is ");
         Serial.println(save_d_centre);
@@ -267,10 +279,10 @@ void loop(void) {
   if (currentpage == 3){//HEIGHT OF OBJECT SCREEN
    
     if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {  
-      if (p.x > 0 && p.x < 50 && p.y > 130 && p.y < 170){
+      if (p.x > plus_1_x && p.x < plus_2_x && p.y > plus_1_y && p.y < plus_2_y){
         h_object += 0.1;
       }  
-      if (p.x > 0 && p.x < 50 && p.y > 90 && p.y < 130){
+      if (p.x > minus_1_x && p.x < minus_2_x && p.y > minus_1_y && p.y < minus_2_y){
         h_object -= 0.1;
       }
       if (h_object >= 25){//MAX HEIGHT OF OBJECT
@@ -286,14 +298,14 @@ void loop(void) {
       tft.println(h_object);
       cm();
 
-      if (p.x > 250 && p.x < 320 && p.y > 0 && p.y < 60){//RETURN TO DISTANCE FROM CENTRE SCREEN 
+      if (p.x > back_1_x && p.x < back_2_x && p.y > back_1_y && p.y < back_2_y){//RETURN TO DISTANCE FROM CENTRE SCREEN 
         tft.fillScreen(BLACK);
         distance_from_centre();
         h_object = 5;
         currentpage = 2; //BACK TO DISTANCE FROM CENTRE SCREEN
         Serial.println("\nDISTANCE FROM CENTRE SCREEN");
       }
-      if (p.x > 250 && p.x < 320 && p.y > 184 && p.y < 244){//GO TO DIAMETER OF OBJECT SCREEN
+      if (p.x > conf_1_x && p.x < conf_2_x && p.y > conf_1_y && p.y < conf_2_y){//GO TO DIAMETER OF OBJECT SCREEN
         save_h_object = h_object;//SAVED DISTANCE FROM CENTRE
         Serial.print("The height of object is ");
         Serial.println(save_h_object);
@@ -311,10 +323,10 @@ void loop(void) {
 
   if (currentpage == 4){//DIAMETER OF OBJECT SCREEN 
     if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {  
-      if (p.x > 0 && p.x < 50 && p.y > 130 && p.y < 170){
+      if (p.x > plus_1_x && p.x < plus_2_x && p.y > plus_1_y && p.y < plus_2_y){
         d_object += 0.1;
       }  
-      if (p.x > 0 && p.x < 50 && p.y > 90 && p.y < 130){
+      if (p.x > minus_1_x && p.x < minus_2_x && p.y > minus_1_y && p.y < minus_2_y){
         d_object -= 0.1;
       }
       if (d_object >= 20){//MAX DIAMETER OF OBJECT
@@ -330,15 +342,15 @@ void loop(void) {
       tft.println(d_object);
       cm();
 
-      if (p.x > 250 && p.x < 320 && p.y > 0 && p.y < 60){//RETURN TO HEIGHT OF OBJECT SCREEN 
+      if (p.x > back_1_x && p.x < back_2_x && p.y > back_1_y && p.y < back_2_y){//RETURN TO HEIGHT OF OBJECT SCREEN 
         tft.fillScreen(BLACK);
         height_of_object();
         d_object = 0;
         currentpage = 3; //BACK TO HEIGHT OF OBJECT SCREEN
         Serial.println("\nHEIGHT OF OBJECT SCREEN");
       }
-      if (p.x > 250 && p.x < 320 && p.y > 184 && p.y < 244){//GO TO DIAMETER OF OBJECT SCREEN
-        save_d_object =d_object;//SAVED DIAMETER OF OBJECT
+      if (p.x > conf_1_x && p.x < conf_2_x && p.y > conf_1_y && p.y < conf_2_y){//GO TO DIAMETER OF OBJECT SCREEN
+        save_d_object =d_object;//SAVED DISTANCE FROM CENTRE
         Serial.print("The diameter of object is ");
         Serial.println(save_d_object);
         p.x = 0;
@@ -348,15 +360,11 @@ void loop(void) {
         Serial.println("\nSTART SCANNING");
         delay (600);
 
-        calc_AOV(); 
+        calc_AOV();
       }
     }
-  }
-  
-
+  }  
 }
-
-
 
 void please_enter(){
     tft.setCursor(80, 18);
@@ -393,11 +401,9 @@ void confirm_button(){
    
 }
 void num_cover(){
-  tft.fillRect(65, 115, 150, 60, GREEN);
+  tft.fillRect(65, 115, 200, 60, BLACK);
 }
 void start_button(){
-
-  tft.setRotation(1);
   tft.fillScreen(BLACK);
   tft.fillRoundRect(50, 50, 220, 140, 20, BLUE);
   tft.drawRoundRect(50, 50, 220, 140, 20, WHITE);
@@ -597,3 +603,4 @@ float calc_minimum_distance(double view_angle){
   return minimum_distance;
   
 }
+
